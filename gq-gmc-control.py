@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,19 @@
 #
 #  Copyright (c) 2017, Chaim Zax <chaim.zax@gmail.com>
 
-import sys
-import os
-import serial
+from __future__ import print_function
+
 import argparse
-import struct
-import platform
-import tempfile
 import ctypes
 import datetime
+import os
+import platform
 import signal
+import struct
+import sys
+import tempfile
+
+import serial
 
 DEFAULT_CONFIG = '~/.gq-gmc-control.conf'
 DEFAULT_BIN_FILE = 'gq-gmc-log.bin'
@@ -808,7 +811,7 @@ def reboot():
 
 def dumpData(data):
     for d in range(len(data)):
-        print "0x%02x 0x%02x (%s)" % (d, ord(data[d]), data[d])
+        print("0x%02x 0x%02x (%s)" % (d, ord(data[d]), data[d]))
 
 def openDevice(port=None, baudrate=115200, skip_check=False, device_type=None, allow_fail=False):
     global m_port, m_deviceName
@@ -985,10 +988,10 @@ if __name__ == "__main__":
     # handle the rest of the commands
 
     elif args.device_info == True:
-        print getDeviceType()
+        print(getDeviceType())
 
     elif args.serial == True:
-        print getSerialNumber()
+        print(getSerialNumber())
 
     elif args.power_on == True:
         setPower(True)
@@ -1003,16 +1006,16 @@ if __name__ == "__main__":
         setHeartbeat(False)
 
     elif args.voltage == True:
-        print getVoltage()
+        print(getVoltage())
 
     elif args.cpm == True:
-        print getCPM(cpm_to_usievert=cpm_to_usievert)
+        print(getCPM(cpm_to_usievert=cpm_to_usievert))
 
     elif args.temperature == True:
-        print getTemperature()
+        print(getTemperature())
 
     elif args.gyro == True:
-        print getGyro()
+        print(getGyro())
 
     elif args.list_config == True:
         listConfig()
@@ -1021,7 +1024,7 @@ if __name__ == "__main__":
         writeConfig(args.write_config)
 
     elif args.get_date_and_time == True:
-        print getDateAndTime()
+        print(getDateAndTime())
 
     elif args.set_date_and_time != None:
         setDateAndTime(args.set_date_and_time)
