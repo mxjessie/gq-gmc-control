@@ -45,7 +45,7 @@ DEFAULT_SKIP_CHECK = False
 DEFAULT_UNIT_CONVERSION_FROM_DEVICE = False
 DEFAULT_DEVICE_TYPE = None
 DEFAULT_FLASH_SIZE = 0x00100000  # 1 MByte
-DEFAULT_CONFIGUATION_SIZE = 0x100 # 256 byte
+DEFAULT_CONFIGUATION_SIZE = 0x100  # 256 byte
 DEFAULT_VERBOSE_LEVEL = 2
 
 EOL = '\n'
@@ -99,8 +99,10 @@ quality of this tool.  """
 
 m_epilog = "Copyright (c) 2017, Chaim Zax <chaim.zax@gmail.com>"
 
+
 def handleArguments():
-    parser = argparse.ArgumentParser(description=m_description, epilog=m_epilog)
+    parser = argparse.ArgumentParser(
+        description=m_description, epilog=m_epilog)
     unit_group = parser.add_mutually_exclusive_group()
     group = parser.add_argument_group(title='commands',
                                       description='Device specific commands. Any of the following commands below can be send to the device. Only one command can be used at a time.')
@@ -117,7 +119,7 @@ def handleArguments():
                         help='do not parse the history data into a csv file, only store the binary data. use only in combination with the \'--data\' command option.')
     parser.add_argument('-c', '--config', action='store', default=None,
                         help='load command line options from a configuration file')
-    #unit_group.add_argument('-S', '--output-in-sievert', metavar='CPM,Sievert', nargs='?',
+    # unit_group.add_argument('-S', '--output-in-sievert', metavar='CPM,Sievert', nargs='?',
     #                    help='don\'t log data in CPM or CPS but in micro Sieverts. optionally supply a tuple used as a conversion factor. e.g. \'1000,0.0000065\' indicates 1000 CPM equals 6.50 uSievert.')
     unit_group.add_argument('-S', '--output-in-usievert', metavar='CPM,uSievert',
                             nargs='?', dest='output_in_usievert', const='',
@@ -134,7 +136,7 @@ def handleArguments():
                         default=None,
                         help="use the CPM to Sievert calibration values from the device to convert data to uSieverts.")
     parser.add_argument('-B', '--verbose', action='store', default=None, type=int,
-                        choices=[1,2],
+                        choices=[1, 2],
                         help="in- or decrease verbosity")
 
     # device operations
@@ -192,12 +194,14 @@ def handleArguments():
 
     return parser.parse_args()
 
+
 def validDateTime(s):
     try:
         return datetime.datetime.strptime(s, "%y/%m/%d %H:%M:%S")
     except ValueError:
         msg = "Not a valid date: '{0}'.".format(s)
         raise argparse.ArgumentTypeError(msg)
+
 
 def commandReturnedOK():
     for loop in range(10):
@@ -209,6 +213,7 @@ def commandReturnedOK():
         return False
     return True
 
+
 def clearPort():
     # close any pending previous command
     m_port.write(">>")
@@ -218,6 +223,7 @@ def clearPort():
         x = m_port.read(1)
         if x == '':
             break
+
 
 def checkDeviceType():
     global m_deviceType, m_deviceName
@@ -247,6 +253,7 @@ def checkDeviceType():
 
     return 0
 
+
 def getDeviceType():
     if m_port == None:
         print('ERROR: no device connected')
@@ -255,6 +262,7 @@ def getDeviceType():
     m_port.write('<GETVER>>')
     deviceType = m_port.read(14)
     return deviceType
+
 
 def getSerialNumber():
     if m_port == None:
@@ -273,6 +281,7 @@ def getSerialNumber():
         ser += "%02X" % ord(serialNumber[x])
     return ser
 
+
 def setPower(on=True):
     if m_port == None:
         print('ERROR: no device connected')
@@ -287,6 +296,7 @@ def setPower(on=True):
         if m_verbose == 2:
             print('device power off')
 
+
 def getVoltage():
     if m_port == None:
         print('ERROR: no device connected')
@@ -300,6 +310,7 @@ def getVoltage():
         return ''
 
     return('%s V' % voltage)
+
 
 def getCPM(cpm_to_usievert=None):
     if m_port == None:
@@ -323,6 +334,7 @@ def getCPM(cpm_to_usievert=None):
         return('%.4f %s' % unit_value)
     else:
         return('%d %s' % unit_value)
+
 
 def getData(address=0x000000, length=None, out_file=DEFAULT_BIN_FILE):
     if m_port == None:
@@ -351,7 +363,8 @@ def getData(address=0x000000, length=None, out_file=DEFAULT_BIN_FILE):
     f_out = open(out_file, 'wb')
 
     while True:
-        cmd = struct.pack('>BBBH', (sub_addr >> 16) & 0xff, (sub_addr >> 8) & 0xff, (sub_addr) & 0xff, sub_len)
+        cmd = struct.pack('>BBBH', (sub_addr >> 16) & 0xff,
+                          (sub_addr >> 8) & 0xff, (sub_addr) & 0xff, sub_len)
         m_port.write('<SPIR' + cmd + '>>')
 
         data = m_port.read(sub_len)
@@ -361,10 +374,12 @@ def getData(address=0x000000, length=None, out_file=DEFAULT_BIN_FILE):
         f_out.write(data)
         total_len += len(data)
         if m_verbose == 2:
-            print("address: 0x%06x, size: %s, total size: %d bytes (%d%%)" % (sub_addr, sub_len, total_len, int(total_len*100/length)))
+            print("address: 0x%06x, size: %s, total size: %d bytes (%d%%)" %
+                  (sub_addr, sub_len, total_len, int(total_len * 100 / length)))
         sub_addr += sub_len
 
     f_out.close
+
 
 def cpmToUSievert(cpm, unit, cpm_to_usievert):
     if cpm_to_usievert == None:
@@ -379,6 +394,7 @@ def cpmToUSievert(cpm, unit, cpm_to_usievert):
     else:
         return (cpm, unit)
 
+
 def getUnitConversionFromDevice():
     # make sure the cached config is up to date
     if m_configData == None:
@@ -390,12 +406,17 @@ def getUnitConversionFromDevice():
     cal_sv = (cal1_sv + cal2_sv + cal3_sv) / 3
 
     if m_verbose == 2:
-        print("calibration value 1 from device: %d CPM = %.2f uSievert/h" % (m_config['cal1_cpm'], m_config['cal1_sv']))
-        print("calibration value 2 from device: %d CPM = %.2f uSievert/h" % (m_config['cal2_cpm'], m_config['cal2_sv']))
-        print("calibration value 3 from device: %d CPM = %.2f uSievert/h" % (m_config['cal3_cpm'], m_config['cal3_sv']))
-        print("using the average of calibration values: %d CPM = %.2f uSievert/h" % (1000, cal_sv))
+        print("calibration value 1 from device: %d CPM = %.2f uSievert/h" %
+              (m_config['cal1_cpm'], m_config['cal1_sv']))
+        print("calibration value 2 from device: %d CPM = %.2f uSievert/h" %
+              (m_config['cal2_cpm'], m_config['cal2_sv']))
+        print("calibration value 3 from device: %d CPM = %.2f uSievert/h" %
+              (m_config['cal3_cpm'], m_config['cal3_sv']))
+        print("using the average of calibration values: %d CPM = %.2f uSievert/h" %
+              (1000, cal_sv))
 
     return (1000, cal_sv)
+
 
 def printData(out_file, data_type, c_str, size=1, cpm_to_usievert=None):
     value = (None, None)
@@ -416,11 +437,13 @@ def printData(out_file, data_type, c_str, size=1, cpm_to_usievert=None):
     else:
         return('%d,%s' % value)
 
+
 def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_usievert=None):
     if in_file == None:
         in_file = DEFAULT_BIN_FILE
     if m_verbose >= 1:
-        print("parsing file '" + in_file + "', and storing data to '" + out_file + "'")
+        print("parsing file '" + in_file +
+              "', and storing data to '" + out_file + "'")
 
     marker = 0
     eof_count = 0
@@ -461,7 +484,8 @@ def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_us
                     data_type = 'CPM'
                     mode_str = 'every minute - threshold'
 
-                f_out.write(',,20%02d/%02d/%02d %02d:%02d:%02d,%s' % (ord(data[0]), ord(data[1]), ord(data[2]), ord(data[3]), ord(data[4]), ord(data[5]), mode_str) + EOL)
+                f_out.write(',,20%02d/%02d/%02d %02d:%02d:%02d,%s' % (ord(data[0]), ord(
+                    data[1]), ord(data[2]), ord(data[3]), ord(data[4]), ord(data[5]), mode_str) + EOL)
 
             # command: two byte value (large numbers)
             elif c == 0x01:
@@ -469,7 +493,8 @@ def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_us
                 if data == '' or len(data) < 2:
                     break
 
-                value = printData(f_out, data_type, data, size=2, cpm_to_usievert=cpm_to_usievert)
+                value = printData(f_out, data_type, data,
+                                  size=2, cpm_to_usievert=cpm_to_usievert)
                 f_out.write(value + EOL)
 
             # command: three byte value (very large numbers)
@@ -478,7 +503,8 @@ def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_us
                 if data == '' or len(data) < 3:
                     break
 
-                value = printData(f_out, data_type, data, size=3, cpm_to_usievert=cpm_to_usievert)
+                value = printData(f_out, data_type, data,
+                                  size=3, cpm_to_usievert=cpm_to_usievert)
                 f_out.write(value + EOL)
 
             # command: four byte value (huge numbers)
@@ -487,7 +513,8 @@ def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_us
                 if data == '' or len(data) < 4:
                     break
 
-                value = printData(f_out, data_type, data, size=4, cpm_to_usievert=cpm_to_usievert)
+                value = printData(f_out, data_type, data,
+                                  size=4, cpm_to_usievert=cpm_to_usievert)
                 f_out.write(value + EOL)
 
             # command: note
@@ -516,7 +543,8 @@ def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_us
                 continue
             else:
                 # possible command turns out to be a regular value
-                f_out.write(printData(f_out, data_type, chr(0x55), size=1, cpm_to_usievert=cpm_to_usievert) + EOL)
+                f_out.write(printData(f_out, data_type, chr(0x55),
+                                      size=1, cpm_to_usievert=cpm_to_usievert) + EOL)
                 marker = 0
         else:
             marker = 0
@@ -526,7 +554,8 @@ def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_us
             marker = 0x55
             continue
 
-        value = printData(f_out, data_type, c_str, size=1, cpm_to_usievert=cpm_to_usievert)
+        value = printData(f_out, data_type, c_str, size=1,
+                          cpm_to_usievert=cpm_to_usievert)
         if value != None:
             f_out.write(value + EOL)
 
@@ -542,9 +571,11 @@ def parseDataFile(in_file=DEFAULT_BIN_FILE, out_file=DEFAULT_CSV_FILE, cpm_to_us
     f_in.close()
     f_out.close()
 
+
 def exit_gracefully(signum, frame):
     global m_terminate
     m_terminate = True
+
 
 def setHeartbeat(enable, cpm_to_usievert=None):
     if m_port == None:
@@ -591,6 +622,7 @@ def setHeartbeat(enable, cpm_to_usievert=None):
         if m_verbose == 2:
             print("ok")
 
+
 def getTemperature():
     if m_port == None:
         print('ERROR: no device connected')
@@ -606,8 +638,10 @@ def getTemperature():
     sign = ''
     if ord(temp[2]) != 0:
         sign = '-'
-    temp_str = "%s%d.%d %s%s" % (sign, ord(temp[0]), ord(temp[1]), unichr(0x00B0), unichr(0x0043))
+    temp_str = "%s%d.%d %s%s" % (sign, ord(temp[0]), ord(
+        temp[1]), unichr(0x00B0), unichr(0x0043))
     return(temp_str.encode('utf-8'))
+
 
 def getGyro():
     if m_port == None:
@@ -623,6 +657,7 @@ def getGyro():
 
     (x, y, z, dummy) = struct.unpack(">hhhB", gyro)
     return "x:%d, y:%d, z:%d" % (x, y, z)
+
 
 def getConfig():
     global m_configData, m_config
@@ -646,23 +681,30 @@ def getConfig():
     m_configData = ctypes.create_string_buffer(data)
 
     m_config = {}
-    m_config['cal1_cpm'] = ord(m_configData[ADDRESS_CALIBRATE1_CPM]) * 256 + ord(m_configData[ADDRESS_CALIBRATE1_CPM+1])
-    m_config['cal1_sv'] = struct.unpack(">f", m_configData[ADDRESS_CALIBRATE1_SV:ADDRESS_CALIBRATE1_SV+4])[0]
-    m_config['cal2_cpm'] = ord(m_configData[ADDRESS_CALIBRATE2_CPM]) * 256 + ord(m_configData[ADDRESS_CALIBRATE2_CPM+1])
-    m_config['cal2_sv'] = struct.unpack(">f", m_configData[ADDRESS_CALIBRATE2_SV:ADDRESS_CALIBRATE2_SV+4])[0]
-    m_config['cal3_cpm'] = ord(m_configData[ADDRESS_CALIBRATE3_CPM]) * 256 + ord(m_configData[ADDRESS_CALIBRATE3_CPM+1])
-    m_config['cal3_sv'] = struct.unpack(">f", m_configData[ADDRESS_CALIBRATE3_SV:ADDRESS_CALIBRATE3_SV+4])[0]
-    m_config['server_website'] = m_configData[ADDRESS_SERVER_WEBSITE:ADDRESS_SERVER_WEBSITE+32]
-    m_config['server_url'] = m_configData[ADDRESS_SERVER_URL:ADDRESS_SERVER_URL+32]
-    m_config['user_id'] = m_configData[ADDRESS_USER_ID:ADDRESS_USER_ID+16]
-    m_config['counter_id'] = m_configData[ADDRESS_COUNTER_ID:ADDRESS_COUNTER_ID+16]
+    m_config['cal1_cpm'] = ord(m_configData[ADDRESS_CALIBRATE1_CPM]) * \
+        256 + ord(m_configData[ADDRESS_CALIBRATE1_CPM + 1])
+    m_config['cal1_sv'] = struct.unpack(
+        ">f", m_configData[ADDRESS_CALIBRATE1_SV:ADDRESS_CALIBRATE1_SV + 4])[0]
+    m_config['cal2_cpm'] = ord(m_configData[ADDRESS_CALIBRATE2_CPM]) * \
+        256 + ord(m_configData[ADDRESS_CALIBRATE2_CPM + 1])
+    m_config['cal2_sv'] = struct.unpack(
+        ">f", m_configData[ADDRESS_CALIBRATE2_SV:ADDRESS_CALIBRATE2_SV + 4])[0]
+    m_config['cal3_cpm'] = ord(m_configData[ADDRESS_CALIBRATE3_CPM]) * \
+        256 + ord(m_configData[ADDRESS_CALIBRATE3_CPM + 1])
+    m_config['cal3_sv'] = struct.unpack(
+        ">f", m_configData[ADDRESS_CALIBRATE3_SV:ADDRESS_CALIBRATE3_SV + 4])[0]
+    m_config['server_website'] = m_configData[ADDRESS_SERVER_WEBSITE:ADDRESS_SERVER_WEBSITE + 32]
+    m_config['server_url'] = m_configData[ADDRESS_SERVER_URL:ADDRESS_SERVER_URL + 32]
+    m_config['user_id'] = m_configData[ADDRESS_USER_ID:ADDRESS_USER_ID + 16]
+    m_config['counter_id'] = m_configData[ADDRESS_COUNTER_ID:ADDRESS_COUNTER_ID + 16]
     if ord(m_configData[ADDRESS_WIFI_ON_OFF]) == 255:
         m_config['wifi_active'] = True
     else:
         m_config['wifi_active'] = False
-    m_config['wifi_ssid'] = m_configData[ADDRESS_WIFI_SSID:ADDRESS_WIFI_SSID+16]
-    m_config['wifi_password'] = m_configData[ADDRESS_WIFI_PASSWORD:ADDRESS_WIFI_PASSWORD+16]
+    m_config['wifi_ssid'] = m_configData[ADDRESS_WIFI_SSID:ADDRESS_WIFI_SSID + 16]
+    m_config['wifi_password'] = m_configData[ADDRESS_WIFI_PASSWORD:ADDRESS_WIFI_PASSWORD + 16]
     # TODO: figure out the other configuration parameters...
+
 
 def listConfig():
     # make sure the cached config is up to date
@@ -678,9 +720,13 @@ def listConfig():
     print("wifi active: " + str(m_config['wifi_active']))
     print("wifi ssid: %s" % m_config['wifi_ssid'])
     print("wifi password: %s" % m_config['wifi_password'])
-    print("calibrate 1: %d cpm = %.2f sv" % (m_config['cal1_cpm'], m_config['cal1_sv']))
-    print("calibrate 2: %d cpm = %.2f sv" % (m_config['cal2_cpm'], m_config['cal2_sv']))
-    print("calibrate 3: %d cpm = %.2f sv" % (m_config['cal3_cpm'], m_config['cal3_sv']))
+    print("calibrate 1: %d cpm = %.2f sv" %
+          (m_config['cal1_cpm'], m_config['cal1_sv']))
+    print("calibrate 2: %d cpm = %.2f sv" %
+          (m_config['cal2_cpm'], m_config['cal2_sv']))
+    print("calibrate 3: %d cpm = %.2f sv" %
+          (m_config['cal3_cpm'], m_config['cal3_sv']))
+
 
 def writeConfig(parameters):
     global m_configData
@@ -707,20 +753,27 @@ def writeConfig(parameters):
             continue
 
         if par_value[0] == 'cal1-cpm':
-            struct.pack_into('>H', m_configData, ADDRESS_CALIBRATE1_CPM, int(par_value[1]))
+            struct.pack_into('>H', m_configData,
+                             ADDRESS_CALIBRATE1_CPM, int(par_value[1]))
         elif par_value[0] == 'cal1-sv':
-            struct.pack_into('>f', m_configData, ADDRESS_CALIBRATE1_SV, float(par_value[1]))
+            struct.pack_into('>f', m_configData,
+                             ADDRESS_CALIBRATE1_SV, float(par_value[1]))
         elif par_value[0] == 'cal2-cpm':
-            struct.pack_into('>H', m_configData, ADDRESS_CALIBRATE2_CPM, int(par_value[1]))
+            struct.pack_into('>H', m_configData,
+                             ADDRESS_CALIBRATE2_CPM, int(par_value[1]))
         elif par_value[0] == 'cal2-sv':
-            struct.pack_into('>f', m_configData, ADDRESS_CALIBRATE2_SV, float(par_value[1]))
+            struct.pack_into('>f', m_configData,
+                             ADDRESS_CALIBRATE2_SV, float(par_value[1]))
         elif par_value[0] == 'cal3-cpm':
-            struct.pack_into('>H', m_configData, ADDRESS_CALIBRATE3_CPM, int(par_value[1]))
+            struct.pack_into('>H', m_configData,
+                             ADDRESS_CALIBRATE3_CPM, int(par_value[1]))
         elif par_value[0] == 'cal3-sv':
-            struct.pack_into('>f', m_configData, ADDRESS_CALIBRATE3_SV, float(par_value[1]))
+            struct.pack_into('>f', m_configData,
+                             ADDRESS_CALIBRATE3_SV, float(par_value[1]))
 
         else:
-            print("WARNING: parameter with name '%s' not supported" % par_value[0])
+            print("WARNING: parameter with name '%s' not supported" %
+                  par_value[0])
 
     # erase all stored parameters in flash
     m_port.write('<ECFG>>')
@@ -738,13 +791,15 @@ def writeConfig(parameters):
         cmd = struct.pack('>' + address_size + 'B', i, ord(m_configData[i]))
         m_port.write('<WCFG' + cmd + '>>')
         if not commandReturnedOK():
-            print("WARNING: write operation failed at address 0x%02X, (some) parameters not stored to device" % i)
+            print(
+                "WARNING: write operation failed at address 0x%02X, (some) parameters not stored to device" % i)
 
     # make the change permanent (write flash)
     m_port.write('<CFGUPDATE>>')
     if not commandReturnedOK():
         print("WARNING: update operation failed, parameters not stored on device")
         return
+
 
 def getDateAndTime():
     if m_port == None:
@@ -758,19 +813,23 @@ def getDateAndTime():
         print('WARNING: no valid date received')
         return ''
 
-    (year, month, day, hour, minute, second, dummy) = struct.unpack(">BBBBBBB", date)
+    (year, month, day, hour, minute, second,
+     dummy) = struct.unpack(">BBBBBBB", date)
     return "%d/%d/%d %d:%d:%d" % (year, month, day, hour, minute, second)
+
 
 def setDateAndTime(date_time):
     if m_port == None:
         print('ERROR: no device connected')
         return -1
 
-    cmd = struct.pack('>BBBBBB', date_time.year - 2000, date_time.month, date_time.day, date_time.hour, date_time.minute, date_time.second)
+    cmd = struct.pack('>BBBBBB', date_time.year - 2000, date_time.month,
+                      date_time.day, date_time.hour, date_time.minute, date_time.second)
     m_port.write('<SETDATETIME' + cmd + '>>')
 
     if not commandReturnedOK():
-       print("WARNING: setting date and time not succeded")
+        print("WARNING: setting date and time not succeded")
+
 
 def sendKey(key):
     if m_port == None:
@@ -789,8 +848,10 @@ def sendKey(key):
     elif key.lower() == 's4':
         m_port.write('<KEY3>>')
 
+
 def firmwareUpdate():
     print('ERROR: option not yet available')
+
 
 def factoryReset():
     if m_port == None:
@@ -802,6 +863,7 @@ def factoryReset():
     if not commandReturnedOK():
         print("WARNING: factory reset not succeded")
 
+
 def reboot():
     if m_port == None:
         print('ERROR: no device connected')
@@ -809,9 +871,11 @@ def reboot():
 
     m_port.write('<REBOOT>>')
 
+
 def dumpData(data):
     for d in range(len(data)):
         print("0x%02x 0x%02x (%s)" % (d, ord(data[d]), data[d]))
+
 
 def openDevice(port=None, baudrate=115200, skip_check=False, device_type=None, allow_fail=False):
     global m_port, m_deviceName
@@ -841,7 +905,8 @@ def openDevice(port=None, baudrate=115200, skip_check=False, device_type=None, a
             if m_verbose == 2:
                 print("using device-type: %s" % m_deviceName)
         else:
-            print("WARNING: unsupported selected device type '%s', defaulting to '%s'" % (device_type, m_deviceName))
+            print("WARNING: unsupported selected device type '%s', defaulting to '%s'" % (
+                device_type, m_deviceName))
 
     return res
 
@@ -919,7 +984,8 @@ if __name__ == "__main__":
         print("output_in_usievert          = '%s'" % (output_in_usievert))
         print("output_in_cpm               = %s" % (output_in_cpm))
         print("skip_check                  = %s" % (skip_check))
-        print("unit_conversion_from_device = %s" % (unit_conversion_from_device))
+        print("unit_conversion_from_device = %s" %
+              (unit_conversion_from_device))
         if device_type == None:
             print("device_type                 = None")
         else:
@@ -943,9 +1009,11 @@ if __name__ == "__main__":
     # only parse a binary file, if needed
     if args.bin_file != None:
         if unit_conversion_from_device == True:
-            res = openDevice(port=port, baudrate=baudrate, skip_check=skip_check, device_type=device_type, allow_fail=True)
+            res = openDevice(port=port, baudrate=baudrate, skip_check=skip_check,
+                             device_type=device_type, allow_fail=True)
             if res != 0:
-                print('WARNING: no connection to device, defaulting to known unit conversion (%d CPM = %.2f uSv/h)' % cpm_to_usievert)
+                print(
+                    'WARNING: no connection to device, defaulting to known unit conversion (%d CPM = %.2f uSv/h)' % cpm_to_usievert)
             else:
                 cpm_to_usievert = getUnitConversionFromDevice()
 
@@ -956,7 +1024,8 @@ if __name__ == "__main__":
         skip_check = True
 
     # all commands below require a connected device
-    res = openDevice(port=port, baudrate=baudrate, skip_check=skip_check, device_type=device_type)
+    res = openDevice(port=port, baudrate=baudrate,
+                     skip_check=skip_check, device_type=device_type)
     if res != 0:
         sys.exit(-res)
 
@@ -980,7 +1049,8 @@ if __name__ == "__main__":
         getData(out_file=bin_output_file)
 
         if no_parse == False:
-            parseDataFile(bin_output_file, output_file, cpm_to_usievert=cpm_to_usievert)
+            parseDataFile(bin_output_file, output_file,
+                          cpm_to_usievert=cpm_to_usievert)
 
         if tmp_file != None and os.path.exists(tmp_file):
             os.remove(tmp_file)
